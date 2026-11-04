@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Printer Job Scheduler</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand-group">
+        <div class="brand-mark">P</div>
+        <div>
+          <p class="eyebrow">DATA STRUCTURES · SIMULATOR</p>
+          <h1>PrintFlow</h1>
+        </div>
+      </div>
+      <div class="topbar-meta">
+        <span class="live-pill"><span class="live-dot"></span> Live</span>
+        <div class="clock-card"><span>SIMULATION TIME</span><strong id="clock">0</strong></div>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-copy-wrap">
+        <p class="eyebrow">INTELLIGENT PRINT QUEUES</p>
+        <h2>Priority scheduling, visualized.</h2>
+        <p>Track active jobs, compare queue levels, and watch the printer move through every high-priority request in real time.</p>
+      </div>
+      <div class="hero-aside">
+        <span class="note-icon">i</span>
+        <p><strong>Simulation rule:</strong> 1 page = 1 tick, and each queue level is processed in order to keep events easy to follow.</p>
+      </div>
+    </section>
+
+    <section class="stats-grid" aria-label="Scheduler overview">
+      <article class="stat-card">
+        <span class="stat-label">Queued jobs</span>
+        <strong class="stat-value">0</strong>
+        <span class="stat-caption">Across every priority level</span>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">Average wait</span>
+        <strong class="stat-value" id="average-wait">0.00</strong>
+        <span class="stat-caption">Simulated time units</span>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">Throughput</span>
+        <strong class="stat-value" id="throughput">0.000</strong>
+        <span class="stat-caption">Jobs per tick</span>
+      </article>
+    </section>
+
+    <section class="layout">
+      <div class="main-column">
+        <section class="panel printer-panel">
+          <div class="panel-heading">
+            <div><p class="eyebrow">OUTPUT DEVICE</p><h2>Printer</h2></div>
+            <span id="printer-status" class="status-badge">IDLE</span>
+          </div>
+          <div id="current-job" class="current-job">Waiting for a job</div>
+          <div class="progress-track"><div id="progress" class="progress"></div></div>
+          <div class="progress-caption"><span id="progress-label">No active job</span><span id="remaining">0 / 0</span></div>
+          <div class="controls">
+            <button id="step-button" class="button secondary">Step 1 tick</button>
+            <button id="run-button" class="button primary">Run until done</button>
+            <button id="reset-button" class="button quiet">Reset</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading"><div><p class="eyebrow">WAITING LINE</p><h2>Priority queues</h2></div><span id="queue-count" class="count">0 jobs</span></div>
+          <div id="queues" class="queues"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading"><div><p class="eyebrow">HISTORY</p><h2>Completion log</h2></div></div>
+          <div class="table-wrap">
+            <table><thead><tr><th>Job</th><th>Priority</th><th>Arrival</th><th>Start</th><th>Finish</th><th>Wait</th></tr></thead>
+              <tbody id="log-body"><tr><td class="empty-cell" colspan="6">No completed jobs yet</td></tr></tbody>
+            </table>
+          </div>
+          <div class="metrics"><div><span>Average wait</span><strong id="average-wait">0.00</strong></div><div><span>Throughput</span><strong id="throughput">0.000 <small>jobs/unit</small></strong></div></div>
+        </section>
+      </div>
+
+      <aside class="panel submit-panel">
+        <p class="eyebrow">NEW REQUEST</p>
+        <h2>Submit a job</h2>
+        <p class="muted">Jobs print in priority order. Equal priorities are handled FIFO.</p>
+        <form id="job-form">
+          <label for="job-name">Job name</label>
+          <input id="job-name" name="name" type="text" maxlength="80" placeholder="e.g. Lab report" required>
+          <label for="pages">Pages</label>
+          <input id="pages" name="pages" type="number" min="1" step="1" placeholder="Number of pages" required>
+          <label for="priority">Priority level</label>
+          <select id="priority" name="priority" required>
+            <option value="1">1 · Urgent</option><option value="2">2 · High</option>
+            <option value="3" selected>3 · Normal</option><option value="4">4 · Low</option>
+          </select>
+          <button class="button primary submit-button" type="submit">Add to queue <span>→</span></button>
+          <p id="message" class="message" role="status"></p>
+        </form>
+        <div class="rule-card"><strong>Scheduling rule</strong><p>Priority 1 is served first. Each priority level is its own linked FIFO queue.</p></div>
+      </aside>
+    </section>
+    <footer>Multi-level queues · Custom linked-list implementation · Capacity <span id="capacity">100</span></footer>
+  </main>
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</body>
+</html>

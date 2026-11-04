@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>PrintFlow — Printer Job Scheduler</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap">
+  <style>
+    :root{--bg:#fff3b0;--ink:#2a1b05;--mute:#6b5420;--card:rgba(255,255,255,.55);--line:rgba(120,80,0,.22);
+      --hi:#e11d68;--md:#fbbf24;--lo:#0e7490;--ok:#0f766e;--vio:#7c3aed;
+      font-family:'Bricolage Grotesque',system-ui,sans-serif;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+    *{box-sizing:border-box}
+    html{color-scheme:light}
+    body{margin:0;color:var(--ink);background:var(--bg);min-height:100vh;overflow-x:hidden}
+    .aurora{position:fixed;inset:0;z-index:-1;background:
+            radial-gradient(40vmax 40vmax at 12% 8%,rgba(255,140,0,.5),transparent 60%),
+            radial-gradient(45vmax 45vmax at 90% 15%,rgba(255,236,80,.85),transparent 60%),
+            radial-gradient(50vmax 50vmax at 70% 95%,rgba(255,170,60,.55),transparent 60%),
+            radial-gradient(35vmax 35vmax at 5% 90%,rgba(255,105,150,.35),transparent 60%);
+      animation:drift 18s ease-in-out infinite alternate}
+    @keyframes drift{to{transform:scale(1.12) rotate(4deg)}}
+    .wrap{max-width:1120px;margin:0 auto;padding:20px 18px 48px}
+    header{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px}
+    .brand{font-weight:800;font-size:22px;display:flex;gap:10px;align-items:center}
+    .mark{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--hi),var(--md));display:grid;place-items:center;color:#2a0b35;transform:rotate(-8deg)}
+    .pill{padding:6px 12px;border:1px solid var(--line);border-radius:99px;font-size:13px;color:var(--mute);background:var(--card)}
+    h1{font-size:clamp(38px,7vw,72px);line-height:.95;margin:0 0 12px;font-weight:800;letter-spacing:-.03em;
+      background:linear-gradient(95deg,#7c2d12 15%,#be185d 55%,#6d28d9);-webkit-background-clip:text;background-clip:text;color:transparent}
+    .lead{color:var(--mute);max-width:56ch;font-size:18px;margin:0 0 6px}
+    .note{font-size:14px;color:var(--mute);margin:0 0 26px}
+    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:22px}
+    .stat{padding:16px;border-radius:18px;background:var(--card);border:1px solid var(--line);backdrop-filter:blur(14px)}
+    .stat span{font-size:13px;color:var(--mute)}
+    .stat b{display:block;font-size:34px;font-weight:800;margin-top:4px;transition:transform .25s}
+    .stat b.bump{transform:scale(1.18)}
+    .stat:nth-child(1) b{color:var(--ok)}.stat:nth-child(2) b{color:#b45309}.stat:nth-child(3) b{color:var(--hi)}.stat:nth-child(4) b{color:var(--lo)}.stat:nth-child(5) b{color:#c4b5fd}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+    @media(max-width:780px){.grid{grid-template-columns:1fr}}
+    .panel{padding:22px;border-radius:24px;background:var(--card);border:1px solid var(--line);backdrop-filter:blur(16px)}
+    h2{margin:0 0 14px;font-size:22px}
+    label{display:block;font-size:13px;color:var(--mute);margin:12px 0 5px}
+    input,select{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.8);color:var(--ink);font:inherit}
+    input:focus,select:focus,button:focus-visible{outline:2px solid var(--lo);outline-offset:2px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    button{font:inherit;cursor:pointer;border:0;border-radius:14px;padding:12px 18px;font-weight:600;color:var(--ink);transition:transform .15s,filter .15s}
+    button:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.1)}
+    button:active:not(:disabled){transform:scale(.97)}
+    button:disabled{opacity:.45;cursor:not-allowed}
+    .go{color:#fff;background:linear-gradient(120deg,var(--hi),var(--vio));box-shadow:0 8px 24px rgba(255,77,141,.35)}
+    .alt{background:rgba(255,255,255,.7);border:1px solid var(--line)}
+    .full{width:100%;margin-top:16px}
+    .demo{margin-top:16px;display:flex;gap:12px;align-items:center;justify-content:space-between;font-size:14px;color:var(--mute);border-top:1px dashed var(--line);padding-top:16px}
+    .printer{margin:0 auto 8px;max-width:360px}
+    .printer svg{display:block;width:100%;height:auto;filter:drop-shadow(0 12px 14px rgba(90,50,0,.28))}
+    .sheet{transform:translateY(-76px)}
+    .printing .sheet{animation:out 1.6s ease-in-out infinite}
+    @keyframes out{0%{transform:translateY(-76px)}65%,100%{transform:translateY(0)}}
+    .pled{fill:#22c55e}
+    .printing .pled{fill:#f59e0b;animation:blink .5s infinite alternate}
+    @keyframes blink{to{opacity:.3}}
+    .lcd{font:700 10px ui-monospace,Menlo,monospace;fill:#7dffb2}
+    .lcd.busy{display:none}.printing .lcd.busy{display:inline}.printing .lcd.idle{display:none}
+    .printing .pr{animation:shake .14s linear infinite}
+    @keyframes shake{50%{transform:translateY(.9px)}}
+    .msg{text-align:center;min-height:24px;margin:0 0 10px;font-weight:600}
+    .bar{height:12px;border-radius:9px;background:rgba(120,80,0,.15);overflow:hidden;margin-bottom:12px}
+    .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--lo),var(--ok),var(--md))}
+    .meta{display:flex;justify-content:space-between;color:var(--mute);margin-bottom:14px;font-size:14px}
+    .btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .txt{background:none;color:var(--mute);margin-top:8px;width:100%;text-decoration:underline}
+    .qgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    @media(max-width:780px){.qgrid{grid-template-columns:1fr}}
+    .col{padding:14px;border-radius:18px;background:rgba(255,255,255,.5);border-top:4px solid var(--c);min-height:120px}
+    .col h3{margin:0 0 10px;font-size:16px;display:flex;justify-content:space-between;align-items:center}
+    .col h3 em{font-style:normal;background:var(--c);color:#fff;border-radius:99px;padding:1px 10px;font-size:14px}
+    .job{position:relative;padding:10px 34px 10px 12px;margin-bottom:8px;border-radius:12px;background:rgba(255,255,255,.8);border-left:4px solid var(--c);animation:pop .4s cubic-bezier(.2,1.4,.4,1)}
+    .job.next{box-shadow:0 0 0 2px var(--c),0 0 18px -2px var(--c)}
+    @keyframes pop{from{transform:scale(.7) translateY(-10px);opacity:0}}
+    .job b{display:block;overflow-wrap:anywhere}.job small{color:var(--mute)}
+    .job button{position:absolute;top:6px;right:6px;padding:2px 8px;background:none;color:var(--mute);border-radius:8px}
+    .empty{color:var(--mute);font-size:14px;padding:8px 2px}
+    .high{--c:var(--hi)}.medium{--c:var(--md)}.low{--c:var(--lo)}.medium .tag,.medium h3 em{color:#2a1b05}
+    .tw{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;font-size:14px;min-width:640px}
+    th,td{padding:10px 8px;text-align:left;border-bottom:1px solid var(--line)}
+    th{color:var(--mute);font-weight:600}
+    .tag{padding:2px 10px;border-radius:99px;background:var(--c);color:#fff;font-weight:600;font-size:12px}
+    #notice{padding:12px 16px;border-radius:14px;background:rgba(255,77,141,.22);border:1px solid var(--hi);margin-bottom:16px}
+    #notice[hidden]{display:none}
+    footer{text-align:center;color:var(--mute);font-size:13px;margin-top:28px}
+    @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  </style>
+</head>
+<body>
+<div class="aurora"></div>
+<div class="wrap">
+  <header><div class="brand"><span class="mark">P</span>PrintFlow</div><span class="pill">Scheduling simulation</span></header>
+  <h1>Printer job scheduler</h1>
+  <p class="lead">High priority prints first, then medium, then low. Inside each level, the earliest request goes first.</p>
+  <p class="note">Simulation: 1 page = 1 simulated second. This is an assumption, not a measurement of printer speed.</p>
+
+  <div class="stats">
+    <div class="stat"><span>Jobs completed</span><b id="sC">0</b></div>
+    <div class="stat"><span>Jobs waiting</span><b id="sW">0</b></div>
+    <div class="stat"><span>Pages printed</span><b id="sP">0</b></div>
+    <div class="stat"><span>Average wait (sec)</span><b id="sA">0.0</b></div>
+    <div class="stat"><span>Average turnaround (sec)</span><b id="sT">0.0</b></div>
+  </div>
+  <div id="notice" role="status" aria-live="polite" hidden></div>
+
+  <div class="grid">
+    <section class="panel">
+      <h2>Add a print job</h2>
+      <form id="f">
+        <label for="n">Document name</label>
+        <input id="n" maxlength="80" placeholder="e.g. Semester project" autocomplete="off" required>
+        <div class="row">
+          <div><label for="p">Pages</label><input id="p" type="number" min="1" max="10000" placeholder="1–10000" required></div>
+          <div><label for="pr">Priority</label><select id="pr"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div>
+        </div>
+        <button class="go full" type="submit">Add to queue</button>
+      </form>
+      <div class="demo"><span>Want to see it in action? Load sample jobs.</span><button id="demo" class="alt" type="button">Load demo</button></div>
+    </section>
+
+    <section class="panel" id="pp">
+      <h2>Printer status</h2>
+      <div class="printer"><svg viewBox="0 0 360 220" role="img" aria-label="Desktop printer"><defs><linearGradient id="gb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7f7f9"/><stop offset=".55" stop-color="#dfe2e8"/><stop offset="1" stop-color="#b3b8c4"/></linearGradient><linearGradient id="gt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#e2e5eb"/></linearGradient><linearGradient id="gd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0c0d12"/><stop offset="1" stop-color="#2d303a"/></linearGradient><clipPath id="cp"><rect x="40" y="146" width="280" height="80"/></clipPath></defs><ellipse cx="180" cy="209" rx="150" ry="8" fill="rgba(60,30,0,.25)"/><path d="M102 68 L114 12 H246 L258 68 Z" fill="url(#gt)" stroke="#b3b8c4"/><path d="M114 66 L124 20 H236 L246 66 Z" fill="#fff" stroke="#d3d6dd"/><g fill="#cbd0da"><rect x="134" y="30" width="92" height="3"/><rect x="132" y="39" width="96" height="3"/><rect x="130" y="48" width="100" height="3"/></g><g class="pr"><rect x="28" y="66" width="304" height="118" rx="18" fill="url(#gb)" stroke="#a3a8b4"/><path d="M28 84a18 18 0 0 1 18-18H314a18 18 0 0 1 18 18V100H28Z" fill="url(#gt)"/><path d="M28 100H332" stroke="#bfc4cf"/><path d="M46 70H314" stroke="#fff" stroke-width="2" opacity=".8"/><circle cx="48" cy="117" r="6" fill="#2d303a"/><circle class="pled" cx="48" cy="117" r="3.5"/><g fill="#cfd3db" stroke="#a3a8b3"><rect x="64" y="111" width="18" height="12" rx="4"/><rect x="88" y="111" width="18" height="12" rx="4"/></g><text x="170" y="121" text-anchor="middle" font-size="12" font-weight="800" fill="#7b8190" font-family="system-ui,sans-serif">PrintFlow</text><rect x="234" y="106" width="82" height="22" rx="4" fill="#08241a" stroke="#1b1d24" stroke-width="2"/><text class="lcd idle" x="244" y="121">READY</text><text class="lcd busy" x="244" y="121">PRINTING</text><rect x="52" y="134" width="256" height="12" rx="5" fill="url(#gd)"/><rect x="40" y="180" width="24" height="8" rx="3" fill="#8d93a1"/><rect x="296" y="180" width="24" height="8" rx="3" fill="#8d93a1"/><rect x="50" y="150" width="260" height="52" rx="8" fill="url(#gt)" stroke="#a3a8b4"/><rect x="60" y="156" width="240" height="40" rx="5" fill="#c6cad3"/><g clip-path="url(#cp)"><g class="sheet"><rect x="108" y="142" width="144" height="54" fill="#fff" stroke="#d3d6dd"/><rect x="118" y="150" width="56" height="6" fill="#e11d68"/><g fill="#cbd0da"><rect x="118" y="162" width="124" height="3"/><rect x="118" y="170" width="110" height="3"/><rect x="118" y="178" width="124" height="3"/><rect x="118" y="186" width="90" height="3"/></g></g></g></g></svg></div>
+      <p class="msg" id="msg">Ready for the next job.</p>
+      <div class="bar"><i id="bar"></i></div>
+      <div class="meta"><span>Simulation clock</span><strong><span id="clk">0</span> sec</strong></div>
+      <div class="btns"><button id="next" class="go" type="button">Print next job</button><button id="all" class="alt" type="button">Process all</button></div>
+      <button id="reset" class="txt" type="button">Reset simulation</button>
+    </section>
+  </div>
+
+  <section class="panel" style="margin-bottom:18px">
+    <h2>Waiting queues</h2>
+    <div class="qgrid">
+      <div class="col high"><h3>High priority <em id="cHigh">0</em></h3><div id="qHigh"></div></div>
+      <div class="col medium"><h3>Medium priority <em id="cMedium">0</em></h3><div id="qMedium"></div></div>
+      <div class="col low"><h3>Low priority <em id="cLow">0</em></h3><div id="qLow"></div></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Completed jobs <small id="hc" style="color:var(--mute);font-weight:400">0 jobs</small></h2>
+    <div class="tw"><table>
+      <thead><tr><th>Job</th><th>Document</th><th>Priority</th><th>Pages</th><th>Arrival</th><th>Started</th><th>Completed</th><th>Wait</th><th>Turnaround</th></tr></thead>
+      <tbody id="hb"></tbody></table></div>
+  </section>
+  <footer>PrintFlow Scheduler · Educational simulation</footer>
+</div>
+
+<script>
+  const $=id=>document.getElementById(id);
+  const LV=['high','medium','low'];
+  let Q,done,clock,nid,busy,stopAll;
+  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  function init(){Q={high:[],medium:[],low:[]};done=[];clock=0;nid=1;busy=false;stopAll=false;
+    $('msg').textContent='Ready for the next job.';$('bar').style.width='0';$('pp').classList.remove('printing');render();}
+  function note(t){const n=$('notice');n.textContent=t;n.hidden=!t;if(t)setTimeout(()=>{n.hidden=true},3500)}
+  function add(name,pages,pr){Q[pr].push({id:nid++,name,pages,pr,arrival:clock});render()}
+  function peek(){for(const l of LV)if(Q[l].length)return Q[l][0];return null}
+  function bump(el,v){if(el.textContent!==String(v)){el.textContent=v;el.classList.add('bump');setTimeout(()=>el.classList.remove('bump'),250)}}
+  function render(){
+    const nxt=peek();
+    for(const l of LV){const L=l[0].toUpperCase()+l.slice(1),box=$('q'+L);box.innerHTML='';
+      $('c'+L).textContent=Q[l].length;
+      if(!Q[l].length){const e=document.createElement('div');e.className='empty';e.textContent='No waiting jobs';box.append(e)}
+      Q[l].forEach(j=>{const d=document.createElement('div');d.className='job '+l+(j===nxt?' next':'');
+        const b=document.createElement('b');b.textContent=j.name;
+        const s=document.createElement('small');s.textContent='#'+j.id+' · '+j.pages+' pages · arrived at '+j.arrival+' sec'+(j===nxt?' · up next':'');
+        const x=document.createElement('button');x.textContent='✕';x.title='Remove job';x.setAttribute('aria-label','Remove '+j.name);
+        x.onclick=()=>{if(busy)return note('Wait for the printer to finish the current job.');Q[l]=Q[l].filter(k=>k!==j);render()};
+        d.append(b,s,x);box.append(d)})}
+    const w=LV.reduce((a,l)=>a+Q[l].length,0),n=done.length;
+    bump($('sC'),n);bump($('sW'),w);bump($('sP'),done.reduce((a,j)=>a+j.pages,0));
+    $('sA').textContent=n?(done.reduce((a,j)=>a+j.wait,0)/n).toFixed(1):'0.0';
+    $('sT').textContent=n?(done.reduce((a,j)=>a+j.turn,0)/n).toFixed(1):'0.0';
+    $('clk').textContent=clock;$('hc').textContent=n+(n===1?' job':' jobs');
+    $('next').disabled=busy||!nxt;$('all').disabled=busy||!nxt;
+    const hb=$('hb');hb.innerHTML='';
+    if(!n){const r=hb.insertRow(),c=r.insertCell();c.colSpan=9;c.style.color='var(--mute)';c.textContent='No completed jobs yet. Your print history will appear here.'}
+    done.forEach(j=>{const r=hb.insertRow();r.className=j.pr;
+      [j.id,j.name,null,j.pages,j.arrival,j.start,j.end,j.wait,j.turn].forEach((v,i)=>{const c=r.insertCell();
+        if(i===2){const t=document.createElement('span');t.className='tag';t.textContent=j.pr;c.append(t)}else c.textContent=v})})}
+  async function printOne(){
+    let job=null;for(const l of LV)if(Q[l].length){job=Q[l].shift();break}
+    if(!job)return false;
+    busy=true;render();const start=clock,end=start+job.pages;
+    $('pp').classList.add('printing');$('msg').textContent='Printing “'+job.name+'” ('+job.pages+' pages)';
+    const dur=Math.min(3000,Math.max(900,job.pages*25)),t0=performance.now();
+    await new Promise(res=>{(function tick(t){const f=Math.min(1,(t-t0)/dur);
+      $('bar').style.width=(f*100)+'%';$('clk').textContent=Math.round(start+f*job.pages);
+      f<1?requestAnimationFrame(tick):res()})(t0)});
+    clock=end;done.push({...job,start,end,wait:start-job.arrival,turn:end-job.arrival});
+    $('pp').classList.remove('printing');$('msg').textContent='Finished “'+job.name+'” ✓';
+    busy=false;render();return true}
+  $('f').onsubmit=e=>{e.preventDefault();const name=$('n').value.trim(),pages=Number($('p').value);
+    if(!name)return note('Enter a document name.');
+    if(!Number.isInteger(pages)||pages<1||pages>10000)return note('Pages must be a whole number from 1 to 10000.');
+    add(name,pages,$('pr').value);e.target.reset();$('pr').value='medium';$('n').focus()};
+  $('demo').onclick=()=>{[['Lab report',12,'medium'],['Exam paper',40,'high'],['Holiday photos',25,'low'],['Boarding pass',2,'high'],['Meeting notes',6,'medium'],['Poster draft',18,'low']].forEach(a=>add(...a));note('Demo jobs loaded. Notice how high priority jumps the line.')};
+  $('next').onclick=()=>{if(!busy)printOne()};
+  $('all').onclick=async()=>{if(busy)return;stopAll=false;while(!stopAll&&peek()){await printOne();await sleep(250)}
+    if(!peek())$('msg').textContent='All jobs done. Printer idle.'};
+  $('reset').onclick=()=>{stopAll=true;if(busy)return note('Let the current job finish, then reset.');init()};
+  init();
+</script>
+</body>
+</html>
