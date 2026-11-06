@@ -13,7 +13,19 @@ At either prompt, enter `0` to use the default (100 jobs or 1 time unit).
 Choose a menu number to submit, process, cancel, search, view, step, run, reset,
 or exit.
 
-## Web interface (optional)
+## CPU scheduling website
+
+The Vite website at the project root demonstrates CPU scheduling algorithms.
+Install Node.js, then run:
+
+```text
+npm install
+npm run dev
+```
+
+Open the local URL printed by Vite, normally `http://localhost:5173`.
+
+## Printer scheduler web interface (optional)
 
 Install the optional web dependency and start the application:
 
